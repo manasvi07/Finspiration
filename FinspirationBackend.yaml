@@ -1,0 +1,2170 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: "AWS::Serverless-2016-10-31"
+Parameters:
+  CognitoName:
+    Type: String
+    Default: cognitotestcf
+  ApplicationBaseName:
+    Type: String
+    Default: test
+
+Resources:
+  #############################################################################
+  AuthPool:
+    Type: "AWS::Cognito::UserPool"
+    Properties:
+      UserPoolName: !Ref CognitoName
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 6
+          RequireLowercase: false
+          RequireNumbers: false
+          RequireSymbols: false
+          RequireUppercase: false
+          TemporaryPasswordValidityDays: 7
+      Schema:
+        - Name: sub
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: false
+          Required: true
+          StringAttributeConstraints:
+            MinLength: "1"
+            MaxLength: "2048"
+        - Name: name
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: "0"
+            MaxLength: "2048"
+        - Name: given_name
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: "0"
+            MaxLength: "2048"
+        - Name: middle_name
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: "0"
+            MaxLength: "2048"
+        - Name: email
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: true
+          StringAttributeConstraints:
+            MinLength: "0"
+            MaxLength: "2048"
+        - Name: email_verified
+          AttributeDataType: Boolean
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+        - Name: firstname
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: "1"
+            MaxLength: "256"
+        - Name: lastname
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: "1"
+            MaxLength: "256"
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      SmsVerificationMessage: "Your verification code is {####}. "
+      EmailVerificationMessage: "Welcome to Finspiration,\n\nYour verification code is {####}. "
+      EmailVerificationSubject: Finspiration  - Your verification code
+      VerificationMessageTemplate:
+        SmsMessage: "Your verification code is {####}. "
+        EmailMessage: "Welcome to Finspiration,\n\nYour verification code is {####}. "
+        EmailSubject: Finspiration  - Your verification code
+        DefaultEmailOption: CONFIRM_WITH_CODE
+      SmsAuthenticationMessage: "Your authentication code is {####}. "
+      MfaConfiguration: "OFF"
+      EmailConfiguration:
+        EmailSendingAccount: COGNITO_DEFAULT
+      UserPoolTags:
+        Name: !Ref CognitoName
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      UsernameConfiguration:
+        CaseSensitive: false
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Priority: 1
+            Name: verified_email
+
+  UserPoolAppClient:
+    Type: "AWS::Cognito::UserPoolClient"
+    Properties:
+      ClientName: !Join ["-", [!Ref CognitoName, "app-client"]]
+      GenerateSecret: false
+      UserPoolId: !Ref AuthPool
+      RefreshTokenValidity: 30
+      AccessTokenValidity: 60
+      IdTokenValidity: 60
+      TokenValidityUnits:
+        AccessToken: minutes
+        IdToken: minutes
+        RefreshToken: days
+      ExplicitAuthFlows:
+        - ALLOW_ADMIN_USER_PASSWORD_AUTH
+        - ALLOW_CUSTOM_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_USER_SRP_AUTH
+      AllowedOAuthFlowsUserPoolClient: false
+      PreventUserExistenceErrors: ENABLED
+      EnableTokenRevocation: true
+
+  ##############################################################################
+  LambdaAddExpense:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Join ["", [!Ref ApplicationBaseName, "AddExpense"]]
+      CodeUri: s3://finspiration/addExpense.py.zip
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: >-
+        arn:aws:iam::474877150456:role/LabRole
+
+  LambdaAddGoals:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Join ["", [!Ref ApplicationBaseName, "AddGoals"]]
+      CodeUri: s3://finspiration/addGoals.py.zip
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: >-
+        arn:aws:iam::474877150456:role/LabRole
+
+  LambdaAddInvestment:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Join ["", [!Ref ApplicationBaseName, "AddInvestment"]]
+      CodeUri: s3://finspiration/addInvestment.py.zip
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: >-
+        arn:aws:iam::474877150456:role/LabRole
+
+  LambdaAddMonthlyBudget:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Join ["", [!Ref ApplicationBaseName, "AddMonthlyBudget"]]
+      CodeUri: s3://finspiration/addMonthlyBudget.py.zip
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: >-
+        arn:aws:iam::474877150456:role/LabRole
+
+  LambdaAddSalary:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Join ["", [!Ref ApplicationBaseName, "AddSalary"]]
+      CodeUri: s3://finspiration/addSalary.py.zip
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: >-
+        arn:aws:iam::474877150456:role/LabRole
+
+  LambdaDeleteGoal:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Join ["", [!Ref ApplicationBaseName, "deleteGoal"]]
+      CodeUri: s3://finspiration/deleteGoal.py.zip
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: >-
+        arn:aws:iam::474877150456:role/LabRole
+
+  LambdaGetAllDetails:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Join ["", [!Ref ApplicationBaseName, "getAllFinancialDetails"]]
+      CodeUri: s3://finspiration/getAllFinancialDetails.py.zip
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: >-
+        arn:aws:iam::474877150456:role/LabRole
+
+  LambdaGetCategory:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Join ["", [!Ref ApplicationBaseName, "getCategory"]]
+      CodeUri: s3://finspiration/getCategory.py.zip
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: >-
+        arn:aws:iam::474877150456:role/LabRole
+
+  LambdaGetGoals:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Join ["", [!Ref ApplicationBaseName, "getGoals"]]
+      CodeUri: s3://finspiration/getGoals.py.zip
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: >-
+        arn:aws:iam::474877150456:role/LabRole
+
+  LambdaGetInvestment:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Join ["", [!Ref ApplicationBaseName, "getInvestment"]]
+      CodeUri: s3://finspiration/getInvestment.py.zip
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: >-
+        arn:aws:iam::474877150456:role/LabRole
+
+  LambdaMonthlyReminders:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Join ["", [!Ref ApplicationBaseName, "monthlyReminders"]]
+      CodeUri: s3://finspiration/monthlyReminders.py.zip
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: >-
+        arn:aws:iam::474877150456:role/LabRole
+
+  LambdaUpdateExpense:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Join ["", [!Ref ApplicationBaseName, "updateExpense"]]
+      CodeUri: s3://finspiration/updateExpense.py.zip
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: >-
+        arn:aws:iam::474877150456:role/LabRole
+
+  LambdaUpdateGoalAmount:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Join ["", [!Ref ApplicationBaseName, "UpdateGoalAmount"]]
+      CodeUri: s3://finspiration/updateGoalAmount.py.zip
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: >-
+        arn:aws:iam::474877150456:role/LabRole
+
+  LambdaUpdateInvestment:
+      Type: 'AWS::Serverless::Function'
+      Properties:
+        FunctionName: !Join ["", [!Ref ApplicationBaseName, "UpdateInvestment"]]
+        CodeUri: s3://finspiration/updateInvestment.py.zip
+        Handler: lambda_function.lambda_handler
+        Runtime: python3.9
+        Description: ''
+        MemorySize: 128
+        Timeout: 15
+        Role: >-
+          arn:aws:iam::474877150456:role/LabRole
+
+  LambdaAddUser:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: !Join ["", [!Ref ApplicationBaseName, "AddUser"]]
+      CodeUri: s3://finspiration/addUser.js.zip
+      Handler: lambda_function.lambda_handler
+      Runtime: nodejs16.x
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: >-
+        arn:aws:iam::474877150456:role/LabRole
+      Environment:
+        Variables:
+          TABLE_NAME: us-east-1
+          REGION: users
+
+
+  ##############################################################################
+  FinspirationApi:
+    Type: 'AWS::ApiGateway::RestApi'
+    Properties:
+      Name: Finspiration API
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      Description: API used for all requests
+      FailOnWarnings: true
+
+  ##############################################################################
+  LambdaPermissionAddExpense:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:invokeFunction'
+      FunctionName:
+        'Fn::GetAtt':
+          - LambdaAddExpense
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        'Fn::Join':
+          - ''
+          - - 'arn:aws:execute-api:'
+            - Ref: 'AWS::Region'
+            - ':'
+            - Ref: 'AWS::AccountId'
+            - ':'
+            - Ref: FinspirationApi
+            - /*
+
+  LambdaPermissionAddGoal:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:invokeFunction'
+      FunctionName:
+        'Fn::GetAtt':
+          - LambdaAddGoals
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        'Fn::Join':
+          - ''
+          - - 'arn:aws:execute-api:'
+            - Ref: 'AWS::Region'
+            - ':'
+            - Ref: 'AWS::AccountId'
+            - ':'
+            - Ref: FinspirationApi
+            - /*
+
+  LambdaPermissionAddInvestment:
+
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:invokeFunction'
+      FunctionName:
+        'Fn::GetAtt':
+          - LambdaAddInvestment
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        'Fn::Join':
+          - ''
+          - - 'arn:aws:execute-api:'
+            - Ref: 'AWS::Region'
+            - ':'
+            - Ref: 'AWS::AccountId'
+            - ':'
+            - Ref: FinspirationApi
+            - /*
+
+  LambdaPermissionAddMonthlyBudget:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:invokeFunction'
+      FunctionName:
+        'Fn::GetAtt':
+          - LambdaAddMonthlyBudget
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        'Fn::Join':
+          - ''
+          - - 'arn:aws:execute-api:'
+            - Ref: 'AWS::Region'
+            - ':'
+            - Ref: 'AWS::AccountId'
+            - ':'
+            - Ref: FinspirationApi
+            - /*
+
+  LambdaPermissionAddSalary:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:invokeFunction'
+      FunctionName:
+        'Fn::GetAtt':
+          - LambdaAddSalary
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        'Fn::Join':
+          - ''
+          - - 'arn:aws:execute-api:'
+            - Ref: 'AWS::Region'
+            - ':'
+            - Ref: 'AWS::AccountId'
+            - ':'
+            - Ref: FinspirationApi
+            - /*
+
+  LambdaPermissionDeleteGoal:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:invokeFunction'
+      FunctionName:
+        'Fn::GetAtt':
+          - LambdaDeleteGoal
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        'Fn::Join':
+          - ''
+          - - 'arn:aws:execute-api:'
+            - Ref: 'AWS::Region'
+            - ':'
+            - Ref: 'AWS::AccountId'
+            - ':'
+            - Ref: FinspirationApi
+            - /*
+
+  LambdaPermissionGetAllDetails:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:invokeFunction'
+      FunctionName:
+        'Fn::GetAtt':
+          - LambdaGetAllDetails
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        'Fn::Join':
+          - ''
+          - - 'arn:aws:execute-api:'
+            - Ref: 'AWS::Region'
+            - ':'
+            - Ref: 'AWS::AccountId'
+            - ':'
+            - Ref: FinspirationApi
+            - /*
+
+  LambdaPermissionGetCategory:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:invokeFunction'
+      FunctionName:
+        'Fn::GetAtt':
+          - LambdaGetCategory
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        'Fn::Join':
+          - ''
+          - - 'arn:aws:execute-api:'
+            - Ref: 'AWS::Region'
+            - ':'
+            - Ref: 'AWS::AccountId'
+            - ':'
+            - Ref: FinspirationApi
+            - /*
+
+  LambdaPermissionGetGoals:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:invokeFunction'
+      FunctionName:
+        'Fn::GetAtt':
+          - LambdaGetGoals
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        'Fn::Join':
+          - ''
+          - - 'arn:aws:execute-api:'
+            - Ref: 'AWS::Region'
+            - ':'
+            - Ref: 'AWS::AccountId'
+            - ':'
+            - Ref: FinspirationApi
+            - /*
+
+  LambdaPermissionGetInvestment:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:invokeFunction'
+      FunctionName:
+        'Fn::GetAtt':
+          - LambdaGetInvestment
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        'Fn::Join':
+          - ''
+          - - 'arn:aws:execute-api:'
+            - Ref: 'AWS::Region'
+            - ':'
+            - Ref: 'AWS::AccountId'
+            - ':'
+            - Ref: FinspirationApi
+            - /*
+
+  LambdaPermissionMonthlyReminders:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:invokeFunction'
+      FunctionName:
+        'Fn::GetAtt':
+          - LambdaMonthlyReminders
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        'Fn::Join':
+          - ''
+          - - 'arn:aws:execute-api:'
+            - Ref: 'AWS::Region'
+            - ':'
+            - Ref: 'AWS::AccountId'
+            - ':'
+            - Ref: FinspirationApi
+            - /*
+
+  LambdaPermisionUpdateExpense:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:invokeFunction'
+      FunctionName:
+        'Fn::GetAtt':
+          - LambdaUpdateExpense
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        'Fn::Join':
+          - ''
+          - - 'arn:aws:execute-api:'
+            - Ref: 'AWS::Region'
+            - ':'
+            - Ref: 'AWS::AccountId'
+            - ':'
+            - Ref: FinspirationApi
+            - /*
+
+  LambdaPermissionUpdateGoalAmount:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:invokeFunction'
+      FunctionName:
+        'Fn::GetAtt':
+          - LambdaUpdateGoalAmount
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        'Fn::Join':
+          - ''
+          - - 'arn:aws:execute-api:'
+            - Ref: 'AWS::Region'
+            - ':'
+            - Ref: 'AWS::AccountId'
+            - ':'
+            - Ref: FinspirationApi
+            - /*
+
+  LambdaPermissionUpdateInvestment:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:invokeFunction'
+      FunctionName:
+        'Fn::GetAtt':
+          - LambdaUpdateInvestment
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        'Fn::Join':
+          - ''
+          - - 'arn:aws:execute-api:'
+            - Ref: 'AWS::Region'
+            - ':'
+            - Ref: 'AWS::AccountId'
+            - ':'
+            - Ref: FinspirationApi
+            - /*
+
+  LambdaPermissionAddUser:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:invokeFunction'
+      FunctionName:
+        'Fn::GetAtt':
+          - LambdaAddUser
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        'Fn::Join':
+          - ''
+          - - 'arn:aws:execute-api:'
+            - Ref: 'AWS::Region'
+            - ':'
+            - Ref: 'AWS::AccountId'
+            - ':'
+            - Ref: FinspirationApi
+            - /*
+  ##############################################################################
+
+  DynamoDBTableUsers:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: users
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  DynamoDBTableGoals:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: goals
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  DynamoDBTableInvestments:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: investments
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  DynamoDBTableExpenses:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: user_expense
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  DynamoDBTableMonthlyBudget:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: monthly_budget
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  ##############################################################################
+
+  InvokeMonthlyReminders:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      EventBusName: default
+      ScheduleExpression: 'cron(0 01 1 * ? *)'
+      State: ENABLED
+      Targets:
+        - Arn:
+            'Fn::GetAtt':
+              - LambdaMonthlyReminders
+              - Arn
+          Id: "MonthlyReminders"
+
+  ##############################################################################
+
+  EventifyApiStage:
+      Type: 'AWS::ApiGateway::Stage'
+      DependsOn:
+        - ApiDeployment
+      Properties:
+        DeploymentId:
+          Ref: ApiDeployment
+        RestApiId:
+          Ref: FinspirationApi
+        StageName: dev
+
+  ApiDeployment:
+    Type: 'AWS::ApiGateway::Deployment'
+    DependsOn:
+      - EventAddExpenseOption
+      - EventAddExpensePost
+      - EventAddGoalOption
+      - EventAddGoalPost
+      - EventAddMonthlyBudgetOption
+      - EventAddMonthlyBudgetPost
+      - EventAddNewInvestmentOption
+      - EventAddNewInvestmentPost
+      - EventAddSalaryOption
+      - EventAddSalaryPost
+      - EventDeleteGoalOption
+      - EventDeleteGoalDelete
+      - EventGetCategoryOption
+      - EventGetCategoryGet
+      - EventGetCompleteFinDetailOption
+      - EventGetCompleteFinDetailGet
+      - EventGetGoalOption
+      - EventGetGoalGet
+      - EventGetInvestmentOption
+      - EventGetInvestmentGet
+      - EventUpdateExpenseOption
+      - EventUpdateExpensePatch
+      - EventUpdateGoalOption
+      - EventUpdateGoalPatch
+      - EventUpdateInvestmentOption
+      - EventUpdateInvestmentPatch
+
+    Properties:
+      RestApiId:
+        Ref: FinspirationApi
+
+  EventAddExpenseResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId:
+        Ref: FinspirationApi
+      ParentId:
+        'Fn::GetAtt':
+          - FinspirationApi
+          - RootResourceId
+      PathPart: add-expense
+
+  EventAddExpenseOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      RestApiId:
+        Ref: FinspirationApi
+      ResourceId:
+        Ref: EventAddExpenseResource
+      HttpMethod: OPTIONS
+      Integration:
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS'"
+            "method.response.header.Access-Control-Allow-Origin": "'*'"
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventAddExpensePost:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      ResourceId:
+        Ref: EventAddExpenseResource
+      RestApiId:
+        Ref: FinspirationApi
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        Uri:
+          'Fn::Join':
+            - ''
+            - - 'arn:aws:apigateway:'
+              - Ref: 'AWS::Region'
+              - ':lambda:path/2015-03-31/functions/'
+              - 'Fn::GetAtt':
+                  - LambdaAddExpense
+                  - Arn
+              - /invocations
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers" : "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'POST'"
+            "method.response.header.Access-Control-Allow-Origin" : "'*'"
+
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '#set($allParams = $input.params())
+                    {
+                      "body" : $input.json("$""),
+                      "headers": {
+                        #foreach($header in $input.params().header.keySet())
+                        "$header": "$util.escapeJavaScript($input.params().header.get($header))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "method": "$context.httpMethod",
+                      "params": {
+                        #foreach($param in $input.params().path.keySet())
+                        "$param": "$util.escapeJavaScript($input.params().path.get($param))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "query": {
+                        #foreach($queryParam in $input.params().querystring.keySet())
+                        "$queryParam": "$util.escapeJavaScript($input.params().querystring.get($queryParam))" #if($foreach.hasNext),#end
+
+                        #end
+                      }
+                    }'
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventAddGoalResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId:
+        Ref: FinspirationApi
+      ParentId:
+        'Fn::GetAtt':
+          - FinspirationApi
+          - RootResourceId
+      PathPart: add-goal
+
+  EventAddGoalOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      RestApiId:
+        Ref: FinspirationApi
+      ResourceId:
+        Ref: EventAddGoalResource
+      HttpMethod: OPTIONS
+      Integration:
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS'"
+            "method.response.header.Access-Control-Allow-Origin": "'*'"
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventAddGoalPost:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      ResourceId:
+        Ref: EventAddGoalResource
+      RestApiId:
+        Ref: FinspirationApi
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        Uri:
+          'Fn::Join':
+            - ''
+            - - 'arn:aws:apigateway:'
+              - Ref: 'AWS::Region'
+              - ':lambda:path/2015-03-31/functions/'
+              - 'Fn::GetAtt':
+                  - LambdaAddGoals
+                  - Arn
+              - /invocations
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers" : "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'POST'"
+            "method.response.header.Access-Control-Allow-Origin" : "'*'"
+
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '#set($allParams = $input.params())
+                    {
+                      "body" : $input.json("$""),
+                      "headers": {
+                        #foreach($header in $input.params().header.keySet())
+                        "$header": "$util.escapeJavaScript($input.params().header.get($header))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "method": "$context.httpMethod",
+                      "params": {
+                        #foreach($param in $input.params().path.keySet())
+                        "$param": "$util.escapeJavaScript($input.params().path.get($param))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "query": {
+                        #foreach($queryParam in $input.params().querystring.keySet())
+                        "$queryParam": "$util.escapeJavaScript($input.params().querystring.get($queryParam))" #if($foreach.hasNext),#end
+
+                        #end
+                      }
+                    }'
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventAddMonthlyBudgetResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId:
+        Ref: FinspirationApi
+      ParentId:
+        'Fn::GetAtt':
+          - FinspirationApi
+          - RootResourceId
+      PathPart: add-monthly-budget
+
+  EventAddMonthlyBudgetOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      RestApiId:
+        Ref: FinspirationApi
+      ResourceId:
+        Ref: EventAddMonthlyBudgetResource
+      HttpMethod: OPTIONS
+      Integration:
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS'"
+            "method.response.header.Access-Control-Allow-Origin": "'*'"
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventAddMonthlyBudgetPost:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      ResourceId:
+        Ref: EventAddMonthlyBudgetResource
+      RestApiId:
+        Ref: FinspirationApi
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        Uri:
+          'Fn::Join':
+            - ''
+            - - 'arn:aws:apigateway:'
+              - Ref: 'AWS::Region'
+              - ':lambda:path/2015-03-31/functions/'
+              - 'Fn::GetAtt':
+                  - LambdaAddMonthlyBudget
+                  - Arn
+              - /invocations
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers" : "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'POST'"
+            "method.response.header.Access-Control-Allow-Origin" : "'*'"
+
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '#set($allParams = $input.params())
+                    {
+                      "body" : $input.json("$""),
+                      "headers": {
+                        #foreach($header in $input.params().header.keySet())
+                        "$header": "$util.escapeJavaScript($input.params().header.get($header))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "method": "$context.httpMethod",
+                      "params": {
+                        #foreach($param in $input.params().path.keySet())
+                        "$param": "$util.escapeJavaScript($input.params().path.get($param))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "query": {
+                        #foreach($queryParam in $input.params().querystring.keySet())
+                        "$queryParam": "$util.escapeJavaScript($input.params().querystring.get($queryParam))" #if($foreach.hasNext),#end
+
+                        #end
+                      }
+                    }'
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventAddNewInvestmentResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId:
+        Ref: FinspirationApi
+      ParentId:
+        'Fn::GetAtt':
+          - FinspirationApi
+          - RootResourceId
+      PathPart: add-new-investment
+
+  EventAddNewInvestmentOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      RestApiId:
+        Ref: FinspirationApi
+      ResourceId:
+        Ref: EventAddNewInvestmentResource
+      HttpMethod: OPTIONS
+      Integration:
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS'"
+            "method.response.header.Access-Control-Allow-Origin": "'*'"
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventAddNewInvestmentPost:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      ResourceId:
+        Ref: EventAddNewInvestmentResource
+      RestApiId:
+        Ref: FinspirationApi
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        Uri:
+          'Fn::Join':
+            - ''
+            - - 'arn:aws:apigateway:'
+              - Ref: 'AWS::Region'
+              - ':lambda:path/2015-03-31/functions/'
+              - 'Fn::GetAtt':
+                  - LambdaAddInvestment
+                  - Arn
+              - /invocations
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers" : "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'POST'"
+            "method.response.header.Access-Control-Allow-Origin" : "'*'"
+
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '#set($allParams = $input.params())
+                    {
+                      "body" : $input.json("$""),
+                      "headers": {
+                        #foreach($header in $input.params().header.keySet())
+                        "$header": "$util.escapeJavaScript($input.params().header.get($header))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "method": "$context.httpMethod",
+                      "params": {
+                        #foreach($param in $input.params().path.keySet())
+                        "$param": "$util.escapeJavaScript($input.params().path.get($param))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "query": {
+                        #foreach($queryParam in $input.params().querystring.keySet())
+                        "$queryParam": "$util.escapeJavaScript($input.params().querystring.get($queryParam))" #if($foreach.hasNext),#end
+
+                        #end
+                      }
+                    }'
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventAddSalaryResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId:
+        Ref: FinspirationApi
+      ParentId:
+        'Fn::GetAtt':
+          - FinspirationApi
+          - RootResourceId
+      PathPart: add-salary
+
+  EventAddSalaryOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      RestApiId:
+        Ref: FinspirationApi
+      ResourceId:
+        Ref: EventAddSalaryResource
+      HttpMethod: OPTIONS
+      Integration:
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS'"
+            "method.response.header.Access-Control-Allow-Origin": "'*'"
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventAddSalaryPost:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      ResourceId:
+        Ref: EventAddSalaryResource
+      RestApiId:
+        Ref: FinspirationApi
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        Uri:
+          'Fn::Join':
+            - ''
+            - - 'arn:aws:apigateway:'
+              - Ref: 'AWS::Region'
+              - ':lambda:path/2015-03-31/functions/'
+              - 'Fn::GetAtt':
+                  - LambdaAddSalary
+                  - Arn
+              - /invocations
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers" : "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'POST'"
+            "method.response.header.Access-Control-Allow-Origin" : "'*'"
+
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '#set($allParams = $input.params())
+                    {
+                      "body" : $input.json("$""),
+                      "headers": {
+                        #foreach($header in $input.params().header.keySet())
+                        "$header": "$util.escapeJavaScript($input.params().header.get($header))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "method": "$context.httpMethod",
+                      "params": {
+                        #foreach($param in $input.params().path.keySet())
+                        "$param": "$util.escapeJavaScript($input.params().path.get($param))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "query": {
+                        #foreach($queryParam in $input.params().querystring.keySet())
+                        "$queryParam": "$util.escapeJavaScript($input.params().querystring.get($queryParam))" #if($foreach.hasNext),#end
+
+                        #end
+                      }
+                    }'
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventDeleteGoalResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId:
+        Ref: FinspirationApi
+      ParentId:
+        'Fn::GetAtt':
+          - FinspirationApi
+          - RootResourceId
+      PathPart: delete-goal
+
+  EventDeleteGoalOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      RestApiId:
+        Ref: FinspirationApi
+      ResourceId:
+        Ref: EventDeleteGoalResource
+      HttpMethod: OPTIONS
+      Integration:
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS'"
+            "method.response.header.Access-Control-Allow-Origin": "'*'"
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventDeleteGoalDelete:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: DELETE
+      ResourceId:
+        Ref: EventDeleteGoalResource
+      RestApiId:
+        Ref: FinspirationApi
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: DELETE
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        Uri:
+          'Fn::Join':
+            - ''
+            - - 'arn:aws:apigateway:'
+              - Ref: 'AWS::Region'
+              - ':lambda:path/2015-03-31/functions/'
+              - 'Fn::GetAtt':
+                  - LambdaDeleteGoal
+                  - Arn
+              - /invocations
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers" : "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'DELETE'"
+            "method.response.header.Access-Control-Allow-Origin" : "'*'"
+
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '#set($allParams = $input.params())
+                    {
+                      "body" : $input.json("$""),
+                      "headers": {
+                        #foreach($header in $input.params().header.keySet())
+                        "$header": "$util.escapeJavaScript($input.params().header.get($header))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "method": "$context.httpMethod",
+                      "params": {
+                        #foreach($param in $input.params().path.keySet())
+                        "$param": "$util.escapeJavaScript($input.params().path.get($param))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "query": {
+                        #foreach($queryParam in $input.params().querystring.keySet())
+                        "$queryParam": "$util.escapeJavaScript($input.params().querystring.get($queryParam))" #if($foreach.hasNext),#end
+
+                        #end
+                      }
+                    }'
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventGetCategoryResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId:
+        Ref: FinspirationApi
+      ParentId:
+        'Fn::GetAtt':
+          - FinspirationApi
+          - RootResourceId
+      PathPart: get-category
+
+  EventGetCategoryOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      RestApiId:
+        Ref: FinspirationApi
+      ResourceId:
+        Ref: EventGetCategoryResource
+      HttpMethod: OPTIONS
+      Integration:
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS'"
+            "method.response.header.Access-Control-Allow-Origin": "'*'"
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventGetCategoryGet:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: GET
+      ResourceId:
+        Ref: EventGetCategoryResource
+      RestApiId:
+        Ref: FinspirationApi
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: GET
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        Uri:
+          'Fn::Join':
+            - ''
+            - - 'arn:aws:apigateway:'
+              - Ref: 'AWS::Region'
+              - ':lambda:path/2015-03-31/functions/'
+              - 'Fn::GetAtt':
+                  - LambdaGetCategory
+                  - Arn
+              - /invocations
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers" : "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'GET'"
+            "method.response.header.Access-Control-Allow-Origin" : "'*'"
+
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '#set($allParams = $input.params())
+                    {
+                      "body" : $input.json("$""),
+                      "headers": {
+                        #foreach($header in $input.params().header.keySet())
+                        "$header": "$util.escapeJavaScript($input.params().header.get($header))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "method": "$context.httpMethod",
+                      "params": {
+                        #foreach($param in $input.params().path.keySet())
+                        "$param": "$util.escapeJavaScript($input.params().path.get($param))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "query": {
+                        #foreach($queryParam in $input.params().querystring.keySet())
+                        "$queryParam": "$util.escapeJavaScript($input.params().querystring.get($queryParam))" #if($foreach.hasNext),#end
+
+                        #end
+                      }
+                    }'
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventGetCompleteFinDetailResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId:
+        Ref: FinspirationApi
+      ParentId:
+        'Fn::GetAtt':
+          - FinspirationApi
+          - RootResourceId
+      PathPart: add-complete-fin-detail
+
+  EventGetCompleteFinDetailOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      RestApiId:
+        Ref: FinspirationApi
+      ResourceId:
+        Ref: EventGetCompleteFinDetailResource
+      HttpMethod: OPTIONS
+      Integration:
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS'"
+            "method.response.header.Access-Control-Allow-Origin": "'*'"
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventGetCompleteFinDetailGet:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: GET
+      ResourceId:
+        Ref: EventGetCompleteFinDetailResource
+      RestApiId:
+        Ref: FinspirationApi
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: GET
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        Uri:
+          'Fn::Join':
+            - ''
+            - - 'arn:aws:apigateway:'
+              - Ref: 'AWS::Region'
+              - ':lambda:path/2015-03-31/functions/'
+              - 'Fn::GetAtt':
+                  - LambdaGetAllDetails
+                  - Arn
+              - /invocations
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers" : "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'GET'"
+            "method.response.header.Access-Control-Allow-Origin" : "'*'"
+
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '#set($allParams = $input.params())
+                    {
+                      "body" : $input.json("$""),
+                      "headers": {
+                        #foreach($header in $input.params().header.keySet())
+                        "$header": "$util.escapeJavaScript($input.params().header.get($header))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "method": "$context.httpMethod",
+                      "params": {
+                        #foreach($param in $input.params().path.keySet())
+                        "$param": "$util.escapeJavaScript($input.params().path.get($param))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "query": {
+                        #foreach($queryParam in $input.params().querystring.keySet())
+                        "$queryParam": "$util.escapeJavaScript($input.params().querystring.get($queryParam))" #if($foreach.hasNext),#end
+
+                        #end
+                      }
+                    }'
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventGetGoalResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId:
+        Ref: FinspirationApi
+      ParentId:
+        'Fn::GetAtt':
+          - FinspirationApi
+          - RootResourceId
+      PathPart: get-goals
+
+  EventGetGoalOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      RestApiId:
+        Ref: FinspirationApi
+      ResourceId:
+        Ref: EventGetGoalResource
+      HttpMethod: OPTIONS
+      Integration:
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS'"
+            "method.response.header.Access-Control-Allow-Origin": "'*'"
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventGetGoalGet:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: GET
+      ResourceId:
+        Ref: EventGetGoalResource
+      RestApiId:
+        Ref: FinspirationApi
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: GET
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        Uri:
+          'Fn::Join':
+            - ''
+            - - 'arn:aws:apigateway:'
+              - Ref: 'AWS::Region'
+              - ':lambda:path/2015-03-31/functions/'
+              - 'Fn::GetAtt':
+                  - LambdaGetGoals
+                  - Arn
+              - /invocations
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers" : "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'GET'"
+            "method.response.header.Access-Control-Allow-Origin" : "'*'"
+
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '#set($allParams = $input.params())
+                    {
+                      "body" : $input.json("$""),
+                      "headers": {
+                        #foreach($header in $input.params().header.keySet())
+                        "$header": "$util.escapeJavaScript($input.params().header.get($header))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "method": "$context.httpMethod",
+                      "params": {
+                        #foreach($param in $input.params().path.keySet())
+                        "$param": "$util.escapeJavaScript($input.params().path.get($param))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "query": {
+                        #foreach($queryParam in $input.params().querystring.keySet())
+                        "$queryParam": "$util.escapeJavaScript($input.params().querystring.get($queryParam))" #if($foreach.hasNext),#end
+
+                        #end
+                      }
+                    }'
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventGetInvestmentResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId:
+        Ref: FinspirationApi
+      ParentId:
+        'Fn::GetAtt':
+          - FinspirationApi
+          - RootResourceId
+      PathPart: add-investments
+
+  EventGetInvestmentOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      RestApiId:
+        Ref: FinspirationApi
+      ResourceId:
+        Ref: EventGetInvestmentResource
+      HttpMethod: OPTIONS
+      Integration:
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS'"
+            "method.response.header.Access-Control-Allow-Origin": "'*'"
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventGetInvestmentGet:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: GET
+      ResourceId:
+        Ref: EventGetInvestmentResource
+      RestApiId:
+        Ref: FinspirationApi
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: GET
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        Uri:
+          'Fn::Join':
+            - ''
+            - - 'arn:aws:apigateway:'
+              - Ref: 'AWS::Region'
+              - ':lambda:path/2015-03-31/functions/'
+              - 'Fn::GetAtt':
+                  - LambdaGetInvestment
+                  - Arn
+              - /invocations
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers" : "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'GET'"
+            "method.response.header.Access-Control-Allow-Origin" : "'*'"
+
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '#set($allParams = $input.params())
+                    {
+                      "body" : $input.json("$""),
+                      "headers": {
+                        #foreach($header in $input.params().header.keySet())
+                        "$header": "$util.escapeJavaScript($input.params().header.get($header))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "method": "$context.httpMethod",
+                      "params": {
+                        #foreach($param in $input.params().path.keySet())
+                        "$param": "$util.escapeJavaScript($input.params().path.get($param))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "query": {
+                        #foreach($queryParam in $input.params().querystring.keySet())
+                        "$queryParam": "$util.escapeJavaScript($input.params().querystring.get($queryParam))" #if($foreach.hasNext),#end
+
+                        #end
+                      }
+                    }'
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventUpdateExpenseResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId:
+        Ref: FinspirationApi
+      ParentId:
+        'Fn::GetAtt':
+          - FinspirationApi
+          - RootResourceId
+      PathPart: update-expense
+
+  EventUpdateExpenseOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      RestApiId:
+        Ref: FinspirationApi
+      ResourceId:
+        Ref: EventUpdateExpenseResource
+      HttpMethod: OPTIONS
+      Integration:
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS'"
+            "method.response.header.Access-Control-Allow-Origin": "'*'"
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventUpdateExpensePatch:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: PATCH
+      ResourceId:
+        Ref: EventUpdateExpenseResource
+      RestApiId:
+        Ref: FinspirationApi
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: PATCH
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        Uri:
+          'Fn::Join':
+            - ''
+            - - 'arn:aws:apigateway:'
+              - Ref: 'AWS::Region'
+              - ':lambda:path/2015-03-31/functions/'
+              - 'Fn::GetAtt':
+                  - LambdaUpdateExpense
+                  - Arn
+              - /invocations
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers" : "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'PATCH'"
+            "method.response.header.Access-Control-Allow-Origin" : "'*'"
+
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '#set($allParams = $input.params())
+                    {
+                      "body" : $input.json("$""),
+                      "headers": {
+                        #foreach($header in $input.params().header.keySet())
+                        "$header": "$util.escapeJavaScript($input.params().header.get($header))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "method": "$context.httpMethod",
+                      "params": {
+                        #foreach($param in $input.params().path.keySet())
+                        "$param": "$util.escapeJavaScript($input.params().path.get($param))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "query": {
+                        #foreach($queryParam in $input.params().querystring.keySet())
+                        "$queryParam": "$util.escapeJavaScript($input.params().querystring.get($queryParam))" #if($foreach.hasNext),#end
+
+                        #end
+                      }
+                    }'
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventUpdateGoalResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId:
+        Ref: FinspirationApi
+      ParentId:
+        'Fn::GetAtt':
+          - FinspirationApi
+          - RootResourceId
+      PathPart: update-goal
+
+  EventUpdateGoalOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      RestApiId:
+        Ref: FinspirationApi
+      ResourceId:
+        Ref: EventUpdateGoalResource
+      HttpMethod: OPTIONS
+      Integration:
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS'"
+            "method.response.header.Access-Control-Allow-Origin": "'*'"
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventUpdateGoalPatch:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: PATCH
+      ResourceId:
+        Ref: EventUpdateGoalResource
+      RestApiId:
+        Ref: FinspirationApi
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: PATCH
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        Uri:
+          'Fn::Join':
+            - ''
+            - - 'arn:aws:apigateway:'
+              - Ref: 'AWS::Region'
+              - ':lambda:path/2015-03-31/functions/'
+              - 'Fn::GetAtt':
+                  - LambdaUpdateGoalAmount
+                  - Arn
+              - /invocations
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers" : "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'PATCH'"
+            "method.response.header.Access-Control-Allow-Origin" : "'*'"
+
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '#set($allParams = $input.params())
+                    {
+                      "body" : $input.json("$""),
+                      "headers": {
+                        #foreach($header in $input.params().header.keySet())
+                        "$header": "$util.escapeJavaScript($input.params().header.get($header))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "method": "$context.httpMethod",
+                      "params": {
+                        #foreach($param in $input.params().path.keySet())
+                        "$param": "$util.escapeJavaScript($input.params().path.get($param))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "query": {
+                        #foreach($queryParam in $input.params().querystring.keySet())
+                        "$queryParam": "$util.escapeJavaScript($input.params().querystring.get($queryParam))" #if($foreach.hasNext),#end
+
+                        #end
+                      }
+                    }'
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventUpdateInvestmentResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId:
+        Ref: FinspirationApi
+      ParentId:
+        'Fn::GetAtt':
+          - FinspirationApi
+          - RootResourceId
+      PathPart: update-investment
+
+  EventUpdateInvestmentOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      RestApiId:
+        Ref: FinspirationApi
+      ResourceId:
+        Ref: EventUpdateInvestmentResource
+      HttpMethod: OPTIONS
+      Integration:
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'OPTIONS'"
+            "method.response.header.Access-Control-Allow-Origin": "'*'"
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+
+  EventUpdateInvestmentPatch:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: PATCH
+      ResourceId:
+        Ref: EventUpdateInvestmentResource
+      RestApiId:
+        Ref: FinspirationApi
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: PATCH
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        Uri:
+          'Fn::Join':
+            - ''
+            - - 'arn:aws:apigateway:'
+              - Ref: 'AWS::Region'
+              - ':lambda:path/2015-03-31/functions/'
+              - 'Fn::GetAtt':
+                  - LambdaUpdateInvestment
+                  - Arn
+              - /invocations
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers" : "'*'"
+            "method.response.header.Access-Control-Allow-Methods": "'PATCH'"
+            "method.response.header.Access-Control-Allow-Origin" : "'*'"
+
+          ResponseTemplates:
+            application/json: ''
+        RequestTemplates:
+          application/json: '#set($allParams = $input.params())
+                    {
+                      "body" : $input.json("$""),
+                      "headers": {
+                        #foreach($header in $input.params().header.keySet())
+                        "$header": "$util.escapeJavaScript($input.params().header.get($header))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "method": "$context.httpMethod",
+                      "params": {
+                        #foreach($param in $input.params().path.keySet())
+                        "$param": "$util.escapeJavaScript($input.params().path.get($param))" #if($foreach.hasNext),#end
+
+                        #end
+                      },
+                      "query": {
+                        #foreach($queryParam in $input.params().querystring.keySet())
+                        "$queryParam": "$util.escapeJavaScript($input.params().querystring.get($queryParam))" #if($foreach.hasNext),#end
+
+                        #end
+                      }
+                    }'
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
